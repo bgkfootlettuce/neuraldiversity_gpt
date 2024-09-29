@@ -1,0 +1,537 @@
+# core_functions.py
+
+import json
+import ai_model
+import data_manager
+import user_profiler
+import knowledge_base
+import assessment_tools
+import career_planner
+import conflict_resolver
+import crisis_manager
+import feedback_system
+import analytics_engine
+
+# Global Variables and Initialization
+sessions = {}
+current_session = None
+decision_trees = {}
+current_decision_step = None
+analytics_data = {}
+
+def initialize_control_center():
+    load_libraries()
+    load_configurations()
+    load_dynamic_decision_trees()
+
+def load_libraries():
+    # Implementation for loading required libraries
+    pass
+
+def load_configurations():
+    # Implementation for loading system configurations
+    pass
+
+def load_dynamic_decision_trees():
+    global decision_trees
+    decision_trees = {
+        "default_tree": load_default_decision_tree(),
+        "manager_tree": load_manager_decision_tree(),
+        "worker_tree": load_worker_decision_tree(),
+        "assessment_tree": load_assessment_decision_tree(),
+        "resource_tree": load_resource_decision_tree(),
+        "conflict_resolution_tree": load_conflict_resolution_tree(),
+        "performance_management_tree": load_performance_management_tree(),
+        "training_and_development_tree": load_training_and_development_tree(),
+        "career_advancement_tree": load_career_advancement_tree()
+    }
+
+# Decision tree loading functions (implementation for each tree)
+
+# Session State Management
+def get_session_state(user_id):
+    global sessions
+    return sessions.get(user_id, {"current_step": None, "data": {}, "memory": {}})
+
+def set_session_state(user_id, state):
+    global sessions
+    sessions[user_id] = state
+
+def save_session_state(user_id):
+    with open(f"session_{user_id}.json", "w") as file:
+        json.dump(sessions[user_id], file)
+
+def load_session_state(user_id):
+    global current_session
+    try:
+        with open(f"session_{user_id}.json", "r") as file:
+            current_session = json.load(file)
+            sessions[user_id] = current_session
+    except FileNotFoundError:
+        current_session = get_session_state(user_id)
+    return current_session
+
+# Memory Management
+def update_memory(user_id, key, value):
+    session_state = get_session_state(user_id)
+    session_state["memory"][key] = value
+    set_session_state(user_id, session_state)
+
+def retrieve_memory(user_id, key):
+    session_state = get_session_state(user_id)
+    return session_state["memory"].get(key, None)
+
+# Decision Tree Navigation
+def get_current_step(user_id):
+    session_state = get_session_state(user_id)
+    return session_state.get("current_step", "identify_role")
+
+def update_current_step(user_id, next_step):
+    session_state = get_session_state(user_id)
+    session_state["current_step"] = next_step
+    set_session_state(user_id, session_state)
+
+def determine_next_step(user_id):
+    current_step = get_current_step(user_id)
+    decision_tree = current_session["session_data"].get("decision_tree", "default_tree")
+    for step in decision_trees[decision_tree]:
+        if step["step"] == current_step:
+            next_steps = step["next"]
+            break
+    else:
+        next_steps = []
+
+    if next_steps:
+        next_step = apply_dynamic_rules(next_steps, user_id)
+        update_current_step(user_id, next_step)
+    else:
+        next_step = None
+    return next_step
+
+def apply_dynamic_rules(next_steps, user_id):
+    context = get_session_state(user_id)
+    user_info = context.get("user_info", {})
+    
+    # Example rule application
+    if user_info.get("location") and "US" in user_info["location"]:
+        next_step = "provide_US_resources"
+    elif user_info.get("location") and "Ontario" in user_info["location"]:
+        next_step = "provide_Ontario_resources"
+    else:
+        next_step = next_steps[0]  # Default to first next step
+    
+    return next_step
+
+def dynamic_rule_engine(rules, context):
+    query = generate_query(rules, context)
+    response = ai_model.gpt_query(query)
+    next_step = extract_next_step(response)
+    return next_step
+
+def generate_query(rules, context):
+    query = f"Evaluate the following rules: {rules} with context: {context}. Determine the most appropriate next step."
+    return query
+
+def extract_next_step(response):
+    # Implementation to extract next step from AI response
+    return "extracted_next_step_from_response"
+
+# User Interaction and Control Center Functions
+def handle_user_command(command, user_id):
+    command, args = parse_command(command)
+    if not is_relevant_command(command):
+        handle_error("Command not relevant to neurodiversity workplace dynamics.")
+        return
+    
+    intent = detect_intent(command, args)
+    if intent == "help":
+        provide_help()
+    elif intent == "feedback":
+        collect_feedback(user_id)
+    elif intent == "start":
+        start_session(user_id)
+    elif intent == "continue":
+        continue_session(user_id)
+    elif intent == "stop":
+        stop_session(user_id)
+    elif intent == "save":
+        save_session_state(user_id)
+    elif intent == "load":
+        load_session_state(user_id)
+    elif intent == "diagnose":
+        diagnose_condition(user_id)
+    elif intent == "career_plan":
+        create_career_plan(user_id)
+    elif intent == "resource":
+        provide_resource(user_id)
+    elif intent == "assessment":
+        conduct_assessment(user_id)
+    else:
+        handle_error("Unknown command.")
+
+def parse_command(command):
+    parts = command.split(" ", 1)
+    return parts[0], parts[1] if len(parts) > 1 else None
+
+def detect_intent(command, args):
+    intents = {
+        "/help": "help", "help": "help",
+        "/feedback": "feedback", "feedback": "feedback",
+        "/start": "start", "start": "start",
+        "/continue": "continue", "continue": "continue",
+        "/stop": "stop", "stop": "stop",
+        "/save": "save", "save": "save",
+        "/load": "load", "load": "load",
+        "/diagnose": "diagnose", "diagnose": "diagnose",
+        "/career_plan": "career_plan", "career_plan": "career_plan",
+        "/resource": "resource", "resource": "resource",
+        "/assessment": "assessment", "assessment": "assessment"
+    }
+    return intents.get(command, "unknown")
+
+def is_relevant_command(command):
+    relevant_commands = [
+        "/help", "/feedback", "/start", "/continue", "/stop", "/save", "/load", 
+        "/diagnose", "/career_plan", "/resource", "/assessment"
+    ]
+    return command in relevant_commands
+
+def provide_help():
+    print("Help information...")
+
+def collect_feedback(user_id):
+    feedback = input("Please provide your feedback: ")
+    feedback_system.process_feedback(feedback, get_session_state(user_id))
+    print("Thank you for your feedback.")
+
+# Specific Task Functions
+def gather_info(user_id):
+    role = identify_role(user_id)
+    if role:
+        current_session["session_data"]["role"] = role
+        gather_user_info(user_id)
+        if role == "manager":
+            gather_manager_info(user_id)
+        elif role == "worker":
+            gather_worker_info(user_id)
+        confirm_info(user_id)
+    else:
+        handle_error("Role identification failed.")
+        identify_role(user_id)
+
+def gather_user_info(user_id):
+    user_info = current_session["session_data"].get("user_info", {})
+    user_info["name"] = input("What is your name? ")
+    user_info["age"] = input("What is your age? ")
+    user_info["gender"] = input("What is your gender? ")
+    user_info["profession"] = input("What is your profession? ")
+    user_info["location"] = input("Where do you live? (Country/State/Province) ")
+    user_info["specific_needs"] = input("Do you have any specific neurodiverse conditions? ")
+    user_info["workplace_environment"] = input("Describe your current workplace environment: ")
+    user_info["communication_style"] = input("What is your preferred communication style? ")
+    user_info["experience_level"] = input("What is your experience level in your profession? ")
+    user_info["goals"] = input("What are your personal and professional goals? ")
+    user_info["challenges"] = input("What challenges do you face at work? ")
+    
+    current_session["session_data"]["user_info"] = user_info
+    determine_next_step(user_id)
+
+def gather_manager_info(user_id):
+    info = input("Please provide information about the neurodiverse employee: ")
+    current_session["session_data"]["manager_info"] = info
+
+def gather_worker_info(user_id):
+    info = input("Please provide your information: ")
+    current_session["session_data"]["worker_info"] = info
+
+def confirm_info(user_id):
+    user_info = current_session["session_data"].get("user_info", {})
+    summary = f"""
+    Summary of gathered information:
+    Name: {user_info.get('name')}
+    Gender: {user_info.get('gender')}
+    Age: {user_info.get('age')}
+    Profession: {user_info.get('profession')}
+    Location: {user_info.get('location')}
+    Specific Needs or Diagnoses: {user_info.get('specific_needs_or_diagnoses')}
+    Work Environment: {user_info.get('work_environment')}
+    Preferred Communication Style: {user_info.get('preferred_communication_style')}
+    """
+    
+    if current_session["session_data"]["role"] == "manager":
+        summary += f"Employer Information: {user_info.get('employer_info')}"
+    
+    print(summary)
+    confirmation = input("Is the above information correct? (yes/no): ").strip().lower()
+    if confirmation != "yes":
+        handle_error("Please re-enter the information.")
+        gather_info(user_id)
+    else:
+        determine_next_step(user_id)
+
+def gather_symptoms(user_id):
+    symptoms = []
+    symptom = input("Please describe your symptoms (or type 'done' to finish): ")
+    while symptom.lower() != "done":
+        symptoms.append(symptom)
+        symptom = input("Any other symptoms? (or type 'done' to finish): ")
+    current_session["session_data"]["symptoms"] = symptoms
+    print("Disclaimer: This tool is not for diagnosis. Please seek professional help. Do you have any official diagnosis? (yes/no)")
+    official_diagnosis = input("Official diagnosis (if any): ")
+    current_session["session_data"]["official_diagnosis"] = official_diagnosis
+    determine_next_step(user_id)
+
+def diagnose_condition(user_id):
+    symptoms = current_session["session_data"].get("symptoms", [])
+    diagnosis = ai_model.perform_rag_diagnose(symptoms)
+    current_session["session_data"]["diagnosis"] = diagnosis
+    provide_accommodation(diagnosis)
+
+def provide_accommodation(diagnosis):
+    accommodations = ai_model.advanced_rag_accommodation(diagnosis)
+    print("Suggested accommodations: " + accommodations)
+
+def create_career_plan(user_id):
+    plan = career_planner.create_plan(get_session_state(user_id))
+    current_session["session_data"]["career_plan"] = plan
+    export_to_file("Career Plan", plan)
+
+def provide_resource(user_id):
+    resource = gather_resource_info(user_id)
+    current_session["session_data"]["resource"] = resource
+    export_to_file("Resource Information", resource)
+
+def conduct_assessment(user_id):
+    assessment_type = select_assessment(user_id)
+    results = assessment_tools.perform_assessment(assessment_type)
+    current_session["session_data"]["assessment_results"] = results
+    export_to_file("Assessment Results", results)
+
+def identify_conflict(user_id):
+    conflict_type = input("Please describe the nature of the conflict: ")
+    current_session["session_data"]["conflict_type"] = conflict_type
+    update_memory(user_id, "conflict_type", conflict_type)
+    determine_next_step(user_id)
+
+def gather_conflict_details(user_id):
+    details = input("Please provide details about the conflict: ")
+    current_session["session_data"]["conflict_details"] = details
+    update_memory(user_id, "conflict_details", details)
+    determine_next_step(user_id)
+
+def suggest_resolution_strategies(user_id):
+    conflict_type = current_session["session_data"].get("conflict_type")
+    details = current_session["session_data"].get("conflict_details")
+    strategies = conflict_resolver.generate_strategies(conflict_type, details)
+    print(strategies)
+current_session["session_data"]["resolution_strategies"] = strategies
+
+def confirm_resolution_plan(user_id):
+    strategies = current_session["session_data"].get("resolution_strategies")
+    print(f"Resolution Plan: {strategies}")
+    confirmation = input("Do you agree with this resolution plan? (yes/no): ").strip().lower()
+    if confirmation != "yes":
+        handle_error("Please provide additional input for a better resolution plan.")
+        gather_conflict_details(user_id)
+    else:
+        print("Resolution plan confirmed and implemented.")
+        determine_next_step(user_id)
+
+def gather_performance_data(user_id):
+    performance_data = input("Please provide the performance data: ")
+    current_session["session_data"]["performance_data"] = performance_data
+    update_memory(user_id, "performance_data", performance_data)
+    determine_next_step(user_id)
+
+def identify_areas_for_improvement(user_id):
+    areas = input("Identify specific areas for improvement: ")
+    current_session["session_data"]["areas_for_improvement"] = areas
+    update_memory(user_id, "areas_for_improvement", areas)
+    determine_next_step(user_id)
+
+def develop_improvement_plan(user_id):
+    plan = input("Develop a plan for improvement: ")
+    current_session["session_data"]["improvement_plan"] = plan
+    update_memory(user_id, "improvement_plan", plan)
+    determine_next_step(user_id)
+
+def monitor_progress(user_id):
+    progress = input("Monitor and provide updates on progress: ")
+    current_session["session_data"]["progress"] = progress
+    update_memory(user_id, "progress", progress)
+    determine_next_step(user_id)
+
+def identify_training_needs(user_id):
+    needs = input("Identify the training needs: ")
+    current_session["session_data"]["training_needs"] = needs
+    update_memory(user_id, "training_needs", needs)
+    determine_next_step(user_id)
+
+def suggest_training_programs(user_id):
+    programs = input("Suggest relevant training programs: ")
+    current_session["session_data"]["training_programs"] = programs
+    update_memory(user_id, "training_programs", programs)
+    determine_next_step(user_id)
+
+def track_training_progress(user_id):
+    progress = input("Track the progress of the training programs: ")
+    current_session["session_data"]["training_progress"] = progress
+    update_memory(user_id, "training_progress", progress)
+    determine_next_step(user_id)
+
+def evaluate_training_effectiveness(user_id):
+    effectiveness = input("Evaluate the effectiveness of the training: ")
+    current_session["session_data"]["training_effectiveness"] = effectiveness
+    update_memory(user_id, "training_effectiveness", effectiveness)
+    determine_next_step(user_id)
+
+def assess_current_role_and_performance(user_id):
+    assessment = input("Assess the current role and performance: ")
+    current_session["session_data"]["role_and_performance_assessment"] = assessment
+    update_memory(user_id, "role_and_performance_assessment", assessment)
+    determine_next_step(user_id)
+
+def identify_career_goals(user_id):
+    goals = input("Identify your career goals: ")
+    current_session["session_data"]["career_goals"] = goals
+    update_memory(user_id, "career_goals", goals)
+    determine_next_step(user_id)
+
+def create_career_development_plan(user_id):
+    plan = input("Create a career development plan: ")
+    current_session["session_data"]["career_development_plan"] = plan
+    update_memory(user_id, "career_development_plan", plan)
+    determine_next_step(user_id)
+
+def provide_mentorship_and_resources(user_id):
+    mentorship = input("Provide mentorship and resources: ")
+    current_session["session_data"]["mentorship_and_resources"] = mentorship
+    update_memory(user_id, "mentorship_and_resources", mentorship)
+    determine_next_step(user_id)
+
+def log_interaction(user_id, action, details):
+    global analytics_data
+    if user_id not in analytics_data:
+        analytics_data[user_id] = []
+    analytics_data[user_id].append({"action": action, "details": details})
+
+def generate_report(user_id):
+    user_data = analytics_data.get(user_id, [])
+    report = analytics_engine.generate_report(user_data)
+    print("Report generated for user:", user_id)
+    return report
+
+def handle_error(message):
+    print(f"Error: {message}")
+    provide_help()
+
+def export_to_file(title, data):
+    with open(f"{title}.txt", "w") as file:
+        file.write(f"{title}:\n\n")
+        for key, value in data.items():
+            file.write(f"{key}: {value}\n")
+
+def select_assessment(user_id):
+    assessment = input("Please select an assessment (IWPA Long/IWPA Short): ").strip().lower()
+    return assessment
+
+def gather_resource_info(user_id):
+    resource_info = {}
+    resource_info["need"] = input("What resource do you need? ")
+    resource_info["details"] = input("Please provide details about the resource requirement: ")
+    return resource_info
+
+def identify_role(user_id):
+    role = input("Are you a manager with a neurodiverse employee or a neurodiverse worker? (manager/worker): ").strip().lower()
+    if role in ["manager", "worker"]:
+        return role
+    else:
+        handle_error("Invalid role. Please specify 'manager' or 'worker'.")
+        return None
+
+# Main Execution
+def main_loop():
+    initialize_control_center()
+    user_id = "user123"  # In a real scenario, this would be dynamically assigned or retrieved
+    
+    # Always start with user information confirmation
+    gather_info(user_id)
+    confirm_info(user_id)
+    
+    while True:
+        command = input("Enter command: ")
+        handle_user_command(command, user_id)
+        
+        # Determine next step dynamically
+        next_step = determine_next_step(user_id)
+        if next_step:
+            control_center_execute(next_step, user_id)
+        else:
+            print("No further steps.")
+            break
+        
+        # Save session state after each step
+        save_session_state(user_id)
+
+def control_center_execute(next_step, user_id):
+    if next_step == "identify_role":
+        identify_role(user_id)
+    elif next_step == "gather_info":
+        gather_info(user_id)
+    elif next_step == "collect_user_info":
+        gather_user_info(user_id)
+    elif next_step == "confirm_info":
+        confirm_info(user_id)
+    elif next_step == "gather_symptoms":
+        gather_symptoms(user_id)
+    elif next_step == "diagnose_condition":
+        diagnose_condition(user_id)
+    elif next_step == "provide_accommodation":
+        provide_accommodation(current_session["session_data"]["diagnosis"])
+    elif next_step == "create_career_plan":
+        create_career_plan(user_id)
+    elif next_step == "provide_resource":
+        provide_resource(user_id)
+    elif next_step == "conduct_assessment":
+        conduct_assessment(user_id)
+    elif next_step == "identify_conflict":
+        identify_conflict(user_id)
+    elif next_step == "gather_conflict_details":
+        gather_conflict_details(user_id)
+    elif next_step == "suggest_resolution_strategies":
+        suggest_resolution_strategies(user_id)
+    elif next_step == "confirm_resolution_plan":
+        confirm_resolution_plan(user_id)
+    elif next_step == "gather_performance_data":
+        gather_performance_data(user_id)
+    elif next_step == "identify_areas_for_improvement":
+        identify_areas_for_improvement(user_id)
+    elif next_step == "develop_improvement_plan":
+        develop_improvement_plan(user_id)
+    elif next_step == "monitor_progress":
+        monitor_progress(user_id)
+    elif next_step == "identify_training_needs":
+        identify_training_needs(user_id)
+    elif next_step == "suggest_training_programs":
+        suggest_training_programs(user_id)
+    elif next_step == "track_training_progress":
+        track_training_progress(user_id)
+    elif next_step == "evaluate_training_effectiveness":
+        evaluate_training_effectiveness(user_id)
+    elif next_step == "assess_current_role_and_performance":
+        assess_current_role_and_performance(user_id)
+    elif next_step == "identify_career_goals":
+        identify_career_goals(user_id)
+    elif next_step == "create_career_development_plan":
+        create_career_development_plan(user_id)
+    elif next_step == "provide_mentorship_and_resources":
+        provide_mentorship_and_resources(user_id)
+    elif next_step == "log_interaction":
+        log_interaction(user_id, action="interaction", details="details")
+    elif next_step == "generate_report":
+        generate_report(user_id)
+    else:
+        handle_error(f"Unknown next step: {next_step}")
+
+if __name__ == "__main__":
+    main_loop()
